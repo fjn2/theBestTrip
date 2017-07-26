@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "big-integer": "^1.6.23",
     "fast-csv": "^2.4.0",
     "node-persist": "^2.1.0"
   }
