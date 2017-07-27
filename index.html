@@ -1,0 +1,37 @@
+<html>
+  <body>
+    <canvas id="myCanvas" style="width:2000px; height: 2000px"></canvas>
+
+    <input type='file' accept='text/plain' onchange='openFile(event)'><br>
+    <div id='output'>
+    ...
+    </div>
+    <script type="text/javascript">
+    var canvas = document.getElementById("myCanvas");
+    var canvasWidth = canvas.width;
+    var canvasHeight = canvas.height;
+    var ctx = canvas.getContext("2d");
+    var canvasData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+
+    var openFile = function(event) {
+        var input = event.target;
+
+        var reader = new FileReader();
+        reader.onload = function(){
+          var text = reader.result;
+
+          const cities = text.split('\n');
+          for (var i = 0; i < cities.length; i++) {
+            const city = cities[i].split(',');
+            city[1] *= 0.005;
+            city[2] *= 0.005;
+            console.log(city[1], city[2]);
+            ctx.fillRect(city[1] + 50, city[2] - 50, 1, 1);
+          }
+          console.log('finish');
+        };
+        reader.readAsText(input.files[0]);
+      };
+    </script>
+  </body>
+</html>

@@ -12,12 +12,11 @@ client.on('connect', function() {
     console.log('arr.length', arr.length)
     for (let i = 0; i < arr.length; i++) {
       client.get(arr[i],(err, val) => {
-        console.log('val', val);
         if (val *1 < min.val *1) {
           min.val = val;
           min.line = arr[i];
         }
-        console.log(val);
+        // console.log(val);
       });
     }
   })
