@@ -10,7 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "big-integer": "^1.6.23",
+    "express": "^4.15.3",
     "fast-csv": "^2.4.0",
-    "node-persist": "^2.1.0"
+    "node-persist": "^2.1.0",
+    "pm2": "^2.6.1",
+    "redis": "^2.7.1"
   }
 }

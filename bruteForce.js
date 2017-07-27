@@ -107,7 +107,7 @@ function getMoviments(number) {
 
 function processing() {
 
-  const movements = getMoviments(new bigInt('1000000000000'));
+  const movements = getMoviments(new bigInt('100'));
   // console.log(movements);
   traveler.path.push(Object.assign({
     agency: ['A','B','C','D'][1],

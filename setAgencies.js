@@ -2,16 +2,54 @@ var http = require('http');
 const fs = require('fs');
 const csv = require("fast-csv");
 const bigInt = require("big-integer");
+const readline = require('readline');
+const redis = require('redis');
 
 const cities = [];
 
+
+const client = redis.createClient();
+client.on('connect', function() {
+  console.log('connected');
+
+});
+
+
 let previous;
 const traveler = {
-  actualCity: undefined,
   agencyDAcum: 0,
   path: []
 };
 const distanceMatrix = [];
+
+let line;
+
+function getLineToEvaluate() {
+  return new Promise((resolve, reject) => {
+    const options = {
+      host: 'localhost',
+      port: 5500,
+      path: '/'
+    };
+
+    callback = function(response) {
+      var str = '';
+
+      //another chunk of data has been recieved, so append it to `str`
+      response.on('data', function (chunk) {
+        str += chunk;
+      });
+
+      //the whole response has been recieved, so we just print it out here
+      response.on('end', function () {
+        resolve(str * 1);
+      });
+    }
+
+    http.request(options, callback).end();
+  });
+}
+
 
 const agencies = {
   A: (traveler, nextCity) => {
@@ -53,50 +91,83 @@ const agencies = {
 
     return false;
   }
-}
+};
 
 
-fs.createReadStream("problem.csv")
-.pipe(csv())
-.on("data", function(data) {
-  //if (cities.length < 4) {
+getLineToEvaluate().then((ln) => {
+  line = ln;
+  console.log('Resolving line', line);
+  loadCities();
+})
+
+function loadCities() {
+  console.log("Loading the cities");
+  fs.createReadStream("problem.csv")
+  .pipe(csv())
+  .on("data", function(data) {
     cities.push({
       id: data[0],
       lat: data[1],
       lng: data[2]
     });
-  //}
-})
-.on("end", function(){
-    console.log("done reading csv");
-});
+  })
+  .on("end", function(){
+      loadPath();
+  });
+
+}
 
 
+function loadPath() {
+  console.log('Loading the paths');
 
+  const rl = readline.createInterface({
+    input: fs.createReadStream('orderedNodes.csv')
+  });
 
+  rl.on('line', (content) => {
+    if (line === lineCount) {
+      console.log('line finded');
+      allPath = content.split(',');
+    }
+    lineCount ++;
+  });
+  rl.on('close', () => {
+    console.log(`path file ready`);
+    processing();
+  });
+}
 
-// Configure our HTTP server to respond with Hello World to all requests.
-var server = http.createServer(function (request, response) {
-  response.writeHead(200, {"Content-Type": "text/plain"});
-  const path = request.url.substring(1).split(',');
-  processing(path);
-});
-
-// Listen on port 8000, IP defaults to 127.0.0.1
-server.listen(8000);
-
-// Put a friendly message on the terminal
-console.log("Server running at http://127.0.0.1:8000/");
+let lineCount = 0;
+let allPath;
 
 
 
 function processing() {
+  console.log('Starting processing');
+
+  traveler.path.push(Object.assign({
+      agency: 'A',
+      cost: 0,
+    }, cities[allPath[0]]));
+
+  for (let i = 1; i < allPath.length - 1; i++) {
+    const nextAgency = getAgency();
+    traveler.path.push(Object.assign({
+      agency: nextAgency,
+      cost: getCost(traveler, nextAgency, allPath[i]),
+    }, cities[allPath[i]]));
+  }
+
   printOutput();
 }
 
+function getAgency () {
+  return 'A';
+}
 function getCost(traveler, nextAgency, nextCity) {
   const kmCost = 0.01;
-  const cost = calculateDistance(traveler.path[traveler.path.length - 1], nextCity) * kmCost;
+  const cost = calculateDistance(traveler.path[traveler.path.length - 1], cities[nextCity]) * kmCost;
   return cost - getDiscount(traveler, cost, nextAgency, nextCity);
 }
 
@@ -143,12 +214,32 @@ function getDiscount(traveler, cost, agency, nextCity, isTesting = false) {
 
 
 function printOutput() {
+  console.log('Printing output');
+
   let acumCost = 0;
+  let respCsv = '';
   for (let i = 0; i < traveler.path.length - 1; i++) {
     acumCost += traveler.path[i].cost;
     console.log(traveler.path[i].id, traveler.path[i].agency, traveler.path[i + 1].id);
+    respCsv += `${traveler.path[i].id},${traveler.path[i].agency}, ${traveler.path[i + 1].id} \n`;
   }
-  console.log(traveler.path[traveler.path.length - 1].id, traveler.path[traveler.path.length - 1].agency, traveler.path[0].id);
+  console.log(traveler.path[traveler.path.length - 1].id, traveler.path[traveler.path.length - 1].agency, traveler.path[0].id, traveler.path[0].cost);
 
+  storeResult(respCsv, acumCost);
   console.log('TOTAL', acumCost);
+}
+
+
+
+function storeResult(path, cost) {
+  console.log('storing in redis...');
+
+  client.set('working-cost-' + line, cost, function(err, reply) {
+    console.log('cost', reply);
+    client.set('working-path-' + line, path, function() {
+      console.log('path', reply);
+      console.log('Finish calculation for line', line);
+      process.exit(1);
+    });
+  });
 }
