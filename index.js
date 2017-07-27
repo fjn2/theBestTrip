@@ -45,13 +45,9 @@ const agencies = {
     const lasTravelDistance = calculateDistance(traveler.path[traveler.path.length - 1], nextCity);
     const totalAcum = traveler.agencyDAcum + lasTravelDistance;
 
-    if (totalAcum > 10000) {
-      return lasTravelDistance;
-    }
-
-    return false;
+    return lasTravelDistance;
   }
-}
+};
 
 
 fs.createReadStream("problem.csv")
@@ -102,7 +98,31 @@ function getCost(traveler, nextAgency, nextCity) {
   const cost = calculateDistance(traveler.path[traveler.path.length - 1], nextCity) * kmCost;
   return cost - getDiscount(traveler, cost, nextAgency, nextCity);
 }
-function getNextAgency() {
+
+function fowardRead(actual, steps) {
+  // TODO
+  // let current = allPath[actual];
+  // if (!current) {
+  //   actual = 0;
+  //   current = allPath[actual];
+  // }
+
+  // if (steps === 0){
+  //   return cities[allPath[actual]];
+  // }
+  // return fowardRead(actual + 1, steps - 1);
+}
+const proyectedCommands = [];
+function getNextAgency(traveler) {
+  // TODO
+  // const next0 = cities[allPath[i]]; // actual
+  // const next1 = fowardRead(i, 1);
+  // const next2 = fowardRead(i, 2);
+  // const next3 = fowardRead(i, 3);
+
+  // const distance1 = calculateDistance(next0, next1);
+  // const distance2 = calculateDistance(next1, next2);
+  // const distance3 = calculateDistance(next2, next3);
   // return ['A','B','C','D'][Math.round(Math.random() * 3)];
   return 'A';
 }
@@ -151,7 +171,7 @@ function getDiscount(traveler, cost, agency, nextCity, isTesting = false) {
         const discountTimes = Math.floor(traveler.agencyDAcum / 10000);
 
         if (!isTesting) {
-          traveler.agencyDAcum = 10000 - discountTimes;
+          traveler.agencyDAcum -= 10000 * discountTimes;
         }
         return discountTimes * 15;
       break;
@@ -161,11 +181,18 @@ function getDiscount(traveler, cost, agency, nextCity, isTesting = false) {
 }
 
 
+
 function printOutput() {
+  console.log('Printing output');
+
   let acumCost = 0;
+  let respCsv = '';
   for (let i = 0; i < traveler.path.length - 1; i++) {
     acumCost += traveler.path[i].cost;
-    console.log(traveler.path[i].id, traveler.path[i].agency, traveler.path[i + 1].id);
+    console.log(traveler.path[i].id + ',' + traveler.path[i].agency + ',' + traveler.path[i + 1].id);
+    respCsv += `${traveler.path[i].id},${traveler.path[i].agency}, ${traveler.path[i + 1].id} \n`;
   }
+  console.log(traveler.path[traveler.path.length - 1].id + ',' + traveler.path[traveler.path.length - 1].agency + ',' + traveler.path[0].id);
+
   console.log('TOTAL', acumCost);
 }

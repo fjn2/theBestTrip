@@ -5,6 +5,7 @@ const app = express()
 
 app.get('/', function (req, res) {
   res.send(actualLine + '');
+  console.log(actualLine);
   actualLine = actualLine + 1;
 })
 
