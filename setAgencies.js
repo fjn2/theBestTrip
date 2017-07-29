@@ -5,6 +5,7 @@ const bigInt = require("big-integer");
 const readline = require('readline');
 const redis = require('redis');
 
+const fileName = 'result75K.csv';
 const cities = [];
 
 
@@ -119,7 +120,7 @@ function loadPath() {
   console.log('Loading the paths');
 
   const rl = readline.createInterface({
-    input: fs.createReadStream('resultB.csv')
+    input: fs.createReadStream(fileName)
   });
 
   rl.on('line', (content) => {
@@ -197,13 +198,14 @@ function getAgency (i) {
     acumDistance += distance1;
     countDistance++;
   }
+
   // console.log(maxDistance, acumDistance/countDistance); // avg calculation
   // logic start
   if (proyectedCommands.length) {
     return proyectedCommands.splice(0, 1)[0];
   }
 
-  if (distance3 > 11256) {
+  if (distance3 > 500) {
     proyectedCommands.push('A');
     proyectedCommands.push('A');
     proyectedCommands.push('A');
@@ -276,18 +278,18 @@ function printOutput() {
   }
   console.log(traveler.path[traveler.path.length - 1].id + ',' + traveler.path[traveler.path.length - 1].agency + ',' + traveler.path[0].id);
 
-  storeResult(respCsv, acumCost);
   console.log('TOTAL', acumCost);
+  storeResult(respCsv, acumCost);
 }
 
 
 
 function storeResult(path, cost) {
   console.log('storing in redis...');
-
-  client.set('working-cost-' + line, cost, function(err, reply) {
+  const randomNumber = Math.round(Math.random() * 100000000000000);
+  client.set('working-' + fileName + '-cost-' + line + '-' + randomNumber, cost, function(err, reply) {
     console.log('cost', reply);
-    client.set('working-path-' + line, path, function() {
+    client.set('working-' + fileName + '-path-' + line + '-' + randomNumber, path, function() {
       console.log('path', reply);
       console.log('Finish calculation for line', line);
       process.exit(1);
